@@ -3,95 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Ham Radio Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- 3D Globe Library -->
-    <script src="https://unpkg.com/globe.gl"></script>
+    <title>Tactical Ham Radio Live Dashboard</title>
+    <!-- Google Fonts & Globe.gl Library -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="//unpkg.com/globe.gl"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Black & White Theme Switcher (Top Right) -->
+
+    <!-- Theme Switcher Top Right -->
     <div class="theme-switch-container">
         <span id="theme-text">DARK MODE</span>
-        <label class="theme-switch" for="checkbox">
-            <input type="checkbox" id="checkbox" />
-            <div class="slider round"></div>
+        <label class="theme-switch">
+            <input type="checkbox" id="checkbox">
+            <span class="slider"></span>
         </label>
     </div>
 
+    <!-- Main Dashboard Container -->
     <div class="dashboard">
-        <!-- LEFT COLUMN -->
+        
+        <!-- LEFT COLUMN: TIME & LOCATION METRICS -->
         <div class="col left-col">
-            <div class="panel time-panel">
-                <div class="time-block">
-                    <span class="label">UTC</span>
-                    <div class="time" id="utc-time">00:00:00</div>
-                    <div class="date" id="utc-date">---, --- --</div>
-                </div>
-                <hr class="divider">
-                <div class="time-block">
-                    <span class="label">LOCAL</span>
-                    <div class="time" id="local-time">00:00:00</div>
-                    <div class="date" id="local-date">---, --- --</div>
-                </div>
+            <!-- UTC & Local Clocks -->
+            <div class="panel">
+                <div class="label">UTC</div>
+                <div class="time" id="utc-time">00:00:00</div>
+                <div class="date" id="utc-date">---, --- --</div>
+                <div class="divider"></div>
+                <div class="label">LOCAL</div>
+                <div class="time" id="local-time">00:00:00</div>
+                <div class="date" id="local-date">---, --- --</div>
             </div>
 
-            <div class="panel loc-panel">
+            <!-- QTH & Maidenhead Grid Matrix -->
+            <div class="panel">
                 <div class="loc-header">
-                    <span class="label">DE - YOUR LOCATION</span>
-                    <span class="highlight-yellow" id="callsign">NOWRL</span>
+                    <div class="label">DF - YOUR LOCATION</div>
+                    <div class="label highlight-yellow bold-white">NOWRL</div>
                 </div>
                 <div class="loc-grid">
-                    <div class="label">GRID</div> <div class="value highlight-green" id="grid">------</div>
-                    <div class="label">COORDS</div> <div class="value" id="coords">--.----°N, --.----°W</div>
-                    <div class="label">QTH</div> <div class="value" id="qth">Detecting Location...</div>
+                    <div class="label">GRID</div>
+                    <div class="value highlight-green" id="grid">------</div>
+                    <div class="label">COORDS</div>
+                    <div class="value" id="coords">0.0000°N, 0.0000°W</div>
+                    <div class="label">QTH</div>
+                    <div class="value" id="qth">Detecting QTH...</div>
                 </div>
-                
                 <div class="sun-times">
                     <div><div class="label">SUNRISE</div><div class="value highlight-yellow" id="sunrise">--:--</div></div>
-                    <div><div class="label">SUNSET</div><div class="value" id="sunset">--:--</div></div>
+                    <div><div class="label">SUNSET</div><div class="value highlight-yellow" id="sunset">--:--</div></div>
                     <div><div class="label">DAYLIGHT</div><div class="value highlight-green" id="daylight">--h --m</div></div>
                 </div>
 
+                <!-- Live Open-Meteo Weather Box -->
                 <div class="weather-box">
                     <div class="wx-main">
-                        <div class="wx-icon" id="wx-icon">☁️</div>
+                        <span class="wx-icon" id="wx-icon">☀️</span>
                         <div class="temp-box">
                             <span class="temp" id="temp">--</span>
-                            <div class="units"><span class="active">°F</span> / <span>°C</span></div>
+                            <span class="units"><span class="active">°F</span><span>/°C</span></span>
                         </div>
                     </div>
                     <div class="wx-details">
-                        <div>HUMIDITY <span id="humidity" class="bold-white">--%</span></div>
-                        <div>WIND <span id="wind" class="bold-white">-- mph</span></div>
+                        <div>HUMIDITY <span class="bold-white" id="humidity">--%</span></div>
+                        <div>WIND <span class="bold-white" id="wind">-- mph</span></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- CENTER COLUMN (3D GLOBE) -->
+        <!-- CENTER COLUMN: 3D WEBGL GLOBE PANEL -->
         <div class="col center-col">
             <div class="panel map-panel">
                 <div class="map-wrapper" id="globeViz"></div>
+                <!-- Dynamic Map Footer Tags -->
                 <div class="map-legend">
-                    CONTACTS & SPOTS — SHAPE = MODE | COLOR = BAND <br>
-                    <span class="legend-dots">
-                        <span style="color:#3b82f6;">■ CW</span> 
-                        <span style="color:#ec4899;">● SSB</span> 
-                        <span style="color:#ef4444;">▲ FT8/FT4</span>
-                        <span style="color:#22d3ee;">◆ 20m</span>
-                        <span style="color:#eab308;">◆ 40m</span>
-                    </span>
+                    <div class="legend-dots">
+                        <span style="color:#3b82f6;">● CW</span>
+                        <span style="color:#ec4899;">● FT8</span>
+                        <span style="color:#ef4444;">● SSB</span>
+                        <span style="color:#22d3ee;">● RTTY</span>
+                        <span style="color:#eab308;">● AM/FM</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- RIGHT COLUMN -->
+        <!-- RIGHT COLUMN: SOLAR IMAGERY & PROPAGATION GAUGES -->
         <div class="col right-col">
+            <!-- NASA SDO Imagery Panel -->
             <div class="panel solar-panel">
                 <div class="label title-label">SOLAR IMAGERY — SDO</div>
                 <div class="sun-img-wrapper">
-                    <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_256_0193.jpg" alt="Live NASA SDO Sun">
+                    <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_256_0193.jpg" alt="NASA SDO">
                 </div>
                 <select class="dropdown" id="solar-wavelength">
                     <option value="0193">Corona & Solar Wind (193 Å)</option>
@@ -107,6 +112,7 @@
                 </div>
             </div>
 
+            <!-- Dynamic Propagation Gauges (আইডি নিখুঁত করা হয়েছে) -->
             <div class="panel prop-panel">
                 <div class="label title-label">PROPAGATION</div>
                 <div class="gauge-container">
@@ -128,16 +134,16 @@
                 </div>
             </div>
         </div>
+
     </div>
 
-    <!-- BOTTOM BAR & CREDITS -->
+    <!-- BOTTOM RUNNING TICKER TAPE -->
     <div class="bottom-bar">
         <span class="badge">DX NEWS</span>
-        <marquee behavior="scroll" direction="left" class="ticker-text" id="ticker-marq">
-            Loading real-time solar alerts and Space Weather Prediction Center feeds...
-        </marquee>
-        <!-- Your Name Signature Included Legally -->
-        <div class="developer-credits">Developed by Md. Emtiaz Hossain Sami &copy; 2026</div>
+        <div class="ticker-text">
+            <marquee id="ticker-marq" scrollamount="4">Loading solar matrix and tracking network beacons...</marquee>
+        </div>
+        <div class="developer-credits">developed by md. emtiaz hossain sami // 2026</div>
     </div>
 
     <script src="script.js"></script>
