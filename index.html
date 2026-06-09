@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tactical Ham Radio Live Dashboard</title>
-    <!-- Google Fonts & Globe.gl Library -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="//unpkg.com/globe.gl"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Theme Switcher Top Right -->
     <div class="theme-switch-container">
         <span id="theme-text">DARK MODE</span>
         <label class="theme-switch">
@@ -20,12 +18,9 @@
         </label>
     </div>
 
-    <!-- Main Dashboard Container -->
     <div class="dashboard">
         
-        <!-- LEFT COLUMN: TIME & LOCATION METRICS -->
         <div class="col left-col">
-            <!-- UTC & Local Clocks -->
             <div class="panel">
                 <div class="label">UTC</div>
                 <div class="time" id="utc-time">00:00:00</div>
@@ -36,7 +31,6 @@
                 <div class="date" id="local-date">---, --- --</div>
             </div>
 
-            <!-- QTH & Maidenhead Grid Matrix -->
             <div class="panel">
                 <div class="loc-header">
                     <div class="label">DF - YOUR LOCATION</div>
@@ -56,13 +50,14 @@
                     <div><div class="label">DAYLIGHT</div><div class="value highlight-green" id="daylight">--h --m</div></div>
                 </div>
 
-                <!-- Live Open-Meteo Weather Box -->
                 <div class="weather-box">
                     <div class="wx-main">
                         <span class="wx-icon" id="wx-icon">☀️</span>
                         <div class="temp-box">
                             <span class="temp" id="temp">--</span>
-                            <span class="units"><span class="active">°F</span><span>/°C</span></span>
+                            <span class="units" id="toggle-temp-unit" style="cursor: pointer; user-select: none;">
+                                <span id="unit-f" class="active">°F</span> / <span id="unit-c">°C</span>
+                            </span>
                         </div>
                     </div>
                     <div class="wx-details">
@@ -73,11 +68,9 @@
             </div>
         </div>
 
-        <!-- CENTER COLUMN: 3D WEBGL GLOBE PANEL -->
         <div class="col center-col">
             <div class="panel map-panel">
                 <div class="map-wrapper" id="globeViz"></div>
-                <!-- Dynamic Map Footer Tags -->
                 <div class="map-legend">
                     <div class="legend-dots">
                         <span style="color:#3b82f6;">● CW</span>
@@ -90,9 +83,7 @@
             </div>
         </div>
 
-        <!-- RIGHT COLUMN: SOLAR IMAGERY & PROPAGATION GAUGES -->
         <div class="col right-col">
-            <!-- NASA SDO Imagery Panel -->
             <div class="panel solar-panel">
                 <div class="label title-label">SOLAR IMAGERY — SDO</div>
                 <div class="sun-img-wrapper">
@@ -112,7 +103,6 @@
                 </div>
             </div>
 
-            <!-- Dynamic Propagation Gauges (আইডি নিখুঁত করা হয়েছে) -->
             <div class="panel prop-panel">
                 <div class="label title-label">PROPAGATION</div>
                 <div class="gauge-container">
@@ -137,7 +127,6 @@
 
     </div>
 
-    <!-- BOTTOM RUNNING TICKER TAPE -->
     <div class="bottom-bar">
         <span class="badge">DX NEWS</span>
         <div class="ticker-text">
