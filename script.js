@@ -1,17 +1,17 @@
-// --- ০. গ্লোবাল মেমোরি ও কনফিগারেশন সিস্টেম (F/C এবং Weather জন্য) ---
+// --- ০. গ্লোবাল মেমোরি ও কনফিগারেশন সিস্টেম ---
 let currentCelsiusTemp = null; 
 let preferredTempUnit = localStorage.getItem('temp-unit') || 'F'; 
+let currentLat = 33.9501;   // ডিফল্ট ল্যাট
+let currentLon = -84.2650;  // ডিফল্ট লন
 
-// --- ১. ঘড়ি ও সময় ট্র্যাকিং (১ সেকেন্ড পর পর লাইভ আপডেট) ---
+// --- ১. ঘড়ি ও সময় ট্র্যাকিং ---
 function runDashboardClock() {
     const now = new Date();
     const formatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
 
-    // Local Time
     document.getElementById('local-time').textContent = now.toLocaleTimeString('en-US', { hour12: false });
     document.getElementById('local-date').textContent = now.toLocaleDateString('en-US', formatOptions);
 
-    // UTC Time
     const utcTime = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
     document.getElementById('utc-time').textContent = utcTime.toLocaleTimeString('en-US', { hour12: false });
     document.getElementById('utc-date').textContent = utcTime.toLocaleDateString('en-US', formatOptions);
@@ -34,37 +34,32 @@ function convertLatLonToGrid(lat, lon) {
     return gridSquare;
 }
 
-// --- ৩. মেইন লাইভ এপিআই ডাটা রেন্ডারিং ইঞ্জিন (স্বয়ংক্রিয় ব্যাকগ্রাউন্ড আপডেট লুপ) ---
-async function synchronizeHamAPIs() {
-    let latitude = 33.9501;   
-    let longitude = -84.2650; 
-
-    // A. লাইভ আইপি লোকেশন ফাইন্ডার এপিআই
-    try {
-        const ipLocationResponse = await fetch('https://freeipapi.com/api/json');
-        if (ipLocationResponse.ok) {
-            const locationData = await ipLocationResponse.json();
-            latitude = locationData.latitude;
-            longitude = locationData.longitude;
-            document.getElementById('qth').textContent = `${locationData.regionName}, ${locationData.countryName}`;
+// --- ৩. মেইন লাইভ ডাটা রেন্ডারিং ইঞ্জিন (লোকেশনের ওপর ভিত্তি করে আবহাওয়া ও সোলার আপডেট করবে) ---
+async function synchronizeHamAPIs(isInitialLoad = false) {
+    // শুধুমাত্র প্রথমবার লোড হওয়ার সময় ব্যবহারকারীর নিজস্ব আইপি ডিটেক্ট করবে
+    if (isInitialLoad) {
+        try {
+            const ipLocationResponse = await fetch('https://freeipapi.com/api/json');
+            if (ipLocationResponse.ok) {
+                const locationData = await ipLocationResponse.json();
+                currentLat = locationData.latitude;
+                currentLon = locationData.longitude;
+                document.getElementById('qth').textContent = `${locationData.regionName}, ${locationData.countryName}`;
+            }
+        } catch (err) {
+            document.getElementById('qth').textContent = "GA, United States"; 
         }
-    } catch (err) {
-        document.getElementById('qth').textContent = "GA, United States"; 
     }
 
-    document.getElementById('coords').textContent = `${latitude.toFixed(4)}°N, ${Math.abs(longitude).toFixed(4)}°W`;
-    document.getElementById('grid').textContent = convertLatLonToGrid(latitude, longitude);
+    document.getElementById('coords').textContent = `${currentLat.toFixed(4)}°N, ${Math.abs(currentLon).toFixed(4)}°W`;
+    document.getElementById('grid').textContent = convertLatLonToGrid(currentLat, currentLon);
 
-    // B. লাইভ ওপেন-মেটিও আবহাওয়া এবং সূর্য এপিআই (F/C থ্রেড ইন্টিগ্রেশন)
+    // B. লাইভ ওপেন-মেটিও আবহাওয়া এপিআই
     try {
-        const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=sunrise,sunset&timezone=auto`);
+        const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=sunrise,sunset&timezone=auto`);
         if (weatherResponse.ok) {
             const wxData = await weatherResponse.json();
-            
-            // আসল সেলসিয়াস ডাটা মেমোরি ভেরিয়েবলে স্টোর করা হচ্ছে
             currentCelsiusTemp = wxData.current.temperature_2m;
-            
-            // তাপমাত্রা ডিসপ্লে রেন্ডার রিকল করা হচ্ছে
             updateTemperatureDisplay();
 
             document.getElementById('humidity').textContent = `${wxData.current.relative_humidity_2m}%`;
@@ -95,24 +90,20 @@ async function synchronizeHamAPIs() {
         
         if (noaaKpRes && noaaKpRes.length > 0) {
             const currentKp = parseFloat(noaaKpRes[noaaKpRes.length - 1][1]);
-            
             const dynamicSFI = Math.floor(Math.random() * 8) + 140; 
             const dynamicAIndex = Math.round(currentKp * 3 + 4);
             const windVelocity = Math.floor(Math.random() * 50) + 410; 
             const calculatedBz = (Math.random() * 3 - 1.5).toFixed(1);
 
-            // টেক্সট ডাটা নোড রিয়েল-টাইম রিপ্লেসমেন্ট
             document.getElementById('sfi-stat').textContent = dynamicSFI;
             document.getElementById('kp-stat').textContent = Math.round(currentKp);
             document.getElementById('wind-stat').textContent = `${windVelocity} km/s`;
             document.getElementById('bz-stat').textContent = `${calculatedBz} nT`;
 
-            // গেজ টেক্সট ডাটা আপডেট
             document.getElementById('gauge-sfi').textContent = dynamicSFI;
             document.getElementById('gauge-k').textContent = Math.round(currentKp);
             document.getElementById('gauge-a').textContent = dynamicAIndex;
 
-            // গেজের কাঁটা (Needle) লাইভ ঘূর্ণন কোণ গণনা
             const sfiDeg = ((dynamicSFI - 70) * 180 / (220 - 70)) - 90;
             const kpDeg = ((currentKp - 0) * 180 / (9 - 0)) - 90;
             const aDeg = ((dynamicAIndex - 0) * 180 / (60 - 0)) - 90;
@@ -128,21 +119,17 @@ async function synchronizeHamAPIs() {
         console.warn("Primary Space API stream bypassed.");
     }
 
-    // হাই-ফিডেলিটি ব্যাকআপ মোড (যদি এপিআই ব্লক বা ডাউন থাকে)
     if (!spaceDataLoaded) {
         document.getElementById('sfi-stat').textContent = "146";
         document.getElementById('kp-stat').textContent = "2";
         document.getElementById('wind-stat').textContent = "412 km/s";
         document.getElementById('bz-stat').textContent = "-1.5 nT";
-        
         document.getElementById('gauge-sfi').textContent = "146";
         document.getElementById('gauge-k').textContent = "2";
         document.getElementById('gauge-a').textContent = "11";
-        
         document.getElementById('needle-sfi').style.transform = `rotate(10deg)`;
         document.getElementById('needle-k').style.transform = `rotate(-50deg)`;
         document.getElementById('needle-a').style.transform = `rotate(-30deg)`;
-        document.getElementById('ticker-marq').textContent = "SWPC BACKUP ALERT: Active Solar conditions stable. Localized transmission paths operating within nominal parameters.";
     }
 }
 
@@ -150,8 +137,6 @@ async function synchronizeHamAPIs() {
 let globalWorldInstance;
 function boot3DEarthGlobe() {
     const globeElement = document.getElementById('globeViz');
-    const runWidth = globeElement.clientWidth;
-    const runHeight = globeElement.clientHeight;
     
     const totalSignalPoints = 45;
     const spaceSignalsData = [...Array(totalSignalPoints).keys()].map(() => ({
@@ -165,24 +150,58 @@ function boot3DEarthGlobe() {
       .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
       .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
       .backgroundColor('#000000') 
-      .width(runWidth)
-      .height(runHeight)
-      
-      // গ্লোব সেন্টারিং ও সাইজ কনফিগারেশন ফিক্স
-      .pointOfView({ lat: 24, lng: -42, altitude: 3.1 }) 
-      
+      .width(globeElement.clientWidth)
+      .height(globeElement.clientHeight)
+      .pointOfView({ lat: currentLat, lng: currentLon, altitude: 3.1 }) 
       .pointsData(spaceSignalsData)
       .pointAltitude(0.02)
       .pointColor('color')
       .pointRadius(0.85);
 
     globalWorldInstance.controls().autoRotate = true;
-    globalWorldInstance.controls().autoRotateSpeed = 0.35;
+    globalWorldInstance.controls().autoRotateSpeed = 0.20; // সার্চের সুবিধার জন্য ঘূর্ণন গতি কিছুটা কমানো হয়েছে
 
     window.addEventListener('resize', () => {
         globalWorldInstance.width(globeElement.clientWidth).height(globeElement.clientHeight);
     });
 }
+
+// --- NEW: দেশ/শহর সার্চ করার কার্যকারিতা লজিক ---
+async function searchLocationQTH() {
+    const query = document.getElementById('search-qth').value.trim();
+    if (!query) return;
+
+    try {
+        // ওপেনসোর্স নোমিনেটিম জিওকোডিং এপিআই (কোনো টোকেন লাগে না)
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+            // নতুন অক্ষাংশ ও দ্রাঘিমাংশ সেট করা হচ্ছে
+            currentLat = parseFloat(data[0].lat);
+            currentLon = parseFloat(data[0].lon);
+            
+            // কিউটিএইচ (QTH) টেক্সট নাম আপডেট
+            document.getElementById('qth').textContent = data[0].display_name.split(',')[0] + ", " + (data[0].display_name.split(',').pop().trim());
+
+            // ১. আবহাওয়া এবং গ্রিড রি-ক্যালকুলেট ও আপডেট করা হচ্ছে
+            synchronizeHamAPIs(false);
+
+            // ২. ৩ডি গ্লোবটি অ্যানিমেটেড হয়ে সার্চ করা দেশের দিকে ঘুরে যাবে এবং ফোকাস করবে
+            globalWorldInstance.pointOfView({ lat: currentLat, lng: currentLon, altitude: 2.5 }, 2000); // ২ সেকেন্ড অ্যানিমেশন টাইম
+        } else {
+            alert("Location not found! Try another country or city.");
+        }
+    } catch (e) {
+        console.error("Geocoding failed.");
+    }
+}
+
+// সার্চ বাটনে ক্লিক এবং এন্টার কী-প্রেস ইভেন্ট লিসেনার
+document.getElementById('search-btn').addEventListener('click', searchLocationQTH);
+document.getElementById('search-qth').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') searchLocationQTH();
+});
 
 // --- ৫. নাসার লাইভ সোলার ইমেজ ফিল্টার সুইচার ---
 document.getElementById('solar-wavelength').addEventListener('change', function(e) {
@@ -236,16 +255,15 @@ function updateTemperatureDisplay() {
     }
 }
 
-// °F / °C ইউনিটের ওপর ক্লিক ইভেন্ট লিসেনার
 document.getElementById('toggle-temp-unit').addEventListener('click', () => {
     preferredTempUnit = (preferredTempUnit === 'F') ? 'C' : 'F';
-    localStorage.setItem('temp-unit', preferredTempUnit); // মেমোরি ক্যাশে সেভ
+    localStorage.setItem('temp-unit', preferredTempUnit); 
     updateTemperatureDisplay();
 });
 
 // --- সিস্টেম এক্সিকিউশন রানার ---
-synchronizeHamAPIs();
+synchronizeHamAPIs(true); // Initial load true রাখায় প্রথমে নিজের লোকেশন লোড হবে
 setTimeout(boot3DEarthGlobe, 350);
 
-// ৫ মিনিট পরপর নিজে থেকে ব্যাকগ্রাউন্ড ডাটা আপডেটের লুপ টাইম ট্র্যাকার
-setInterval(synchronizeHamAPIs, 300000);
+// ৫ মিনিট পরপর অটো ব্যাকগ্রাউন্ড ডাটা রিফ্রেশ লুপ
+setInterval(() => { synchronizeHamAPIs(false); }, 300000);
