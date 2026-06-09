@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Ham Radio Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- 3D Globe Library -->
+    <script src="https://unpkg.com/globe.gl"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Black & White Theme Switcher (Top Right) -->
+    <div class="theme-switch-container">
+        <span id="theme-text">DARK MODE</span>
+        <label class="theme-switch" for="checkbox">
+            <input type="checkbox" id="checkbox" />
+            <div class="slider round"></div>
+        </label>
+    </div>
+
+    <div class="dashboard">
+        <!-- LEFT COLUMN -->
+        <div class="col left-col">
+            <div class="panel time-panel">
+                <div class="time-block">
+                    <span class="label">UTC</span>
+                    <div class="time" id="utc-time">00:00:00</div>
+                    <div class="date" id="utc-date">---, --- --</div>
+                </div>
+                <hr class="divider">
+                <div class="time-block">
+                    <span class="label">LOCAL</span>
+                    <div class="time" id="local-time">00:00:00</div>
+                    <div class="date" id="local-date">---, --- --</div>
+                </div>
+            </div>
+
+            <div class="panel loc-panel">
+                <div class="loc-header">
+                    <span class="label">DE - YOUR LOCATION</span>
+                    <span class="highlight-yellow" id="callsign">NOWRL</span>
+                </div>
+                <div class="loc-grid">
+                    <div class="label">GRID</div> <div class="value highlight-green" id="grid">------</div>
+                    <div class="label">COORDS</div> <div class="value" id="coords">--.----°N, --.----°W</div>
+                    <div class="label">QTH</div> <div class="value" id="qth">Detecting Location...</div>
+                </div>
+                
+                <div class="sun-times">
+                    <div><div class="label">SUNRISE</div><div class="value highlight-yellow" id="sunrise">--:--</div></div>
+                    <div><div class="label">SUNSET</div><div class="value" id="sunset">--:--</div></div>
+                    <div><div class="label">DAYLIGHT</div><div class="value highlight-green" id="daylight">--h --m</div></div>
+                </div>
+
+                <div class="weather-box">
+                    <div class="wx-main">
+                        <div class="wx-icon" id="wx-icon">☁️</div>
+                        <div class="temp-box">
+                            <span class="temp" id="temp">--</span>
+                            <div class="units"><span class="active">°F</span> / <span>°C</span></div>
+                        </div>
+                    </div>
+                    <div class="wx-details">
+                        <div>HUMIDITY <span id="humidity" class="bold-white">--%</span></div>
+                        <div>WIND <span id="wind" class="bold-white">-- mph</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER COLUMN (3D GLOBE) -->
+        <div class="col center-col">
+            <div class="panel map-panel">
+                <div class="map-wrapper" id="globeViz"></div>
+                <div class="map-legend">
+                    CONTACTS & SPOTS — SHAPE = MODE | COLOR = BAND <br>
+                    <span class="legend-dots">
+                        <span style="color:#3b82f6;">■ CW</span> 
+                        <span style="color:#ec4899;">● SSB</span> 
+                        <span style="color:#ef4444;">▲ FT8/FT4</span>
+                        <span style="color:#22d3ee;">◆ 20m</span>
+                        <span style="color:#eab308;">◆ 40m</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="col right-col">
+            <div class="panel solar-panel">
+                <div class="label title-label">SOLAR IMAGERY — SDO</div>
+                <div class="sun-img-wrapper">
+                    <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_256_0193.jpg" alt="Live NASA SDO Sun">
+                </div>
+                <select class="dropdown" id="solar-wavelength">
+                    <option value="0193">Corona & Solar Wind (193 Å)</option>
+                    <option value="0304">Chromosphere (304 Å)</option>
+                    <option value="0171">Quiet Corona (171 Å)</option>
+                </select>
+                
+                <div class="solar-stats-grid">
+                    <div><div class="label">SFI</div><div class="value" id="sfi-stat">--</div></div>
+                    <div><div class="label">KP INDEX</div><div class="value highlight-green" id="kp-stat">--</div></div>
+                    <div><div class="label">WIND</div><div class="value highlight-green" id="wind-stat">--- km/s</div></div>
+                    <div><div class="label">BZ</div><div class="value" id="bz-stat">-- nT</div></div>
+                </div>
+            </div>
+
+            <div class="panel prop-panel">
+                <div class="label title-label">PROPAGATION</div>
+                <div class="gauge-container">
+                    <div class="gauge">
+                        <div class="semi-circle"><div class="needle" id="needle-sfi"></div></div>
+                        <div class="label">SFI</div>
+                        <div class="value highlight-green" id="gauge-sfi">--</div>
+                    </div>
+                    <div class="gauge">
+                        <div class="semi-circle"><div class="needle" id="needle-k"></div></div>
+                        <div class="label">K INDEX</div>
+                        <div class="value highlight-green" id="gauge-k">--</div>
+                    </div>
+                    <div class="gauge">
+                        <div class="semi-circle"><div class="needle" id="needle-a"></div></div>
+                        <div class="label">A INDEX</div>
+                        <div class="value highlight-yellow" id="gauge-a">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM BAR & CREDITS -->
+    <div class="bottom-bar">
+        <span class="badge">DX NEWS</span>
+        <marquee behavior="scroll" direction="left" class="ticker-text" id="ticker-marq">
+            Loading real-time solar alerts and Space Weather Prediction Center feeds...
+        </marquee>
+        <!-- Your Name Signature Included Legally -->
+        <div class="developer-credits">Developed by Md. Emtiaz Hossain Sami &copy; 2026</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
