@@ -1,8 +1,8 @@
 // --- ০. গ্লোবাল মেমোরি ও কনফিগারেশন সিস্টেম ---
 let currentCelsiusTemp = null; 
 let preferredTempUnit = localStorage.getItem('temp-unit') || 'F'; 
-let currentLat = 33.9501;   // ডিফল্ট ল্যাট
-let currentLon = -84.2650;  // ডিফল্ট লন
+let currentLat = 33.9501;   
+let currentLon = -84.2650;  
 
 // --- ১. ঘড়ি ও সময় ট্র্যাকিং ---
 function runDashboardClock() {
@@ -34,9 +34,8 @@ function convertLatLonToGrid(lat, lon) {
     return gridSquare;
 }
 
-// --- ৩. মেইন লাইভ ডাটা রেন্ডারিং ইঞ্জিন (লোকেশনের ওপর ভিত্তি করে আবহাওয়া ও সোলার আপডেট করবে) ---
+// --- ৩. মেইন লাইভ ডাটা রেন্ডারিং ইঞ্জিন ---
 async function synchronizeHamAPIs(isInitialLoad = false) {
-    // শুধুমাত্র প্রথমবার লোড হওয়ার সময় ব্যবহারকারীর নিজস্ব আইপি ডিটেক্ট করবে
     if (isInitialLoad) {
         try {
             const ipLocationResponse = await fetch('https://freeipapi.com/api/json');
@@ -133,7 +132,7 @@ async function synchronizeHamAPIs(isInitialLoad = false) {
     }
 }
 
-// --- ৪. ৩ডি গ্লোব ইঞ্জিন (নিখুঁত সেন্টারিং এবং স্কেলিং ফিক্স) ---
+// --- ৪. ৩ডি গ্লোব ইঞ্জিন ---
 let globalWorldInstance;
 function boot3DEarthGlobe() {
     const globeElement = document.getElementById('globeViz');
@@ -159,36 +158,34 @@ function boot3DEarthGlobe() {
       .pointRadius(0.85);
 
     globalWorldInstance.controls().autoRotate = true;
-    globalWorldInstance.controls().autoRotateSpeed = 0.20; // সার্চের সুবিধার জন্য ঘূর্ণন গতি কিছুটা কমানো হয়েছে
+    globalWorldInstance.controls().autoRotateSpeed = 0.20; 
 
     window.addEventListener('resize', () => {
         globalWorldInstance.width(globeElement.clientWidth).height(globeElement.clientHeight);
     });
 }
 
-// --- NEW: দেশ/শহর সার্চ করার কার্যকারিতা লজিক ---
+// --- লাইভ সার্চ অপারেশন ফাংশন ---
 async function searchLocationQTH() {
     const query = document.getElementById('search-qth').value.trim();
     if (!query) return;
 
     try {
-        // ওপেনসোর্স নোমিনেটিম জিওকোডিং এপিআই (কোনো টোকেন লাগে না)
         const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
         const data = await res.json();
 
         if (data && data.length > 0) {
-            // নতুন অক্ষাংশ ও দ্রাঘিমাংশ সেট করা হচ্ছে
             currentLat = parseFloat(data[0].lat);
             currentLon = parseFloat(data[0].lon);
             
-            // কিউটিএইচ (QTH) টেক্সট নাম আপডেট
-            document.getElementById('qth').textContent = data[0].display_name.split(',')[0] + ", " + (data[0].display_name.split(',').pop().trim());
+            // QTH নাম রি-ফর্ম্যাট
+            const parts = data[0].display_name.split(',');
+            document.getElementById('qth').textContent = parts[0] + ", " + parts[parts.length - 1].trim();
 
-            // ১. আবহাওয়া এবং গ্রিড রি-ক্যালকুলেট ও আপডেট করা হচ্ছে
             synchronizeHamAPIs(false);
 
-            // ২. ৩ডি গ্লোবটি অ্যানিমেটেড হয়ে সার্চ করা দেশের দিকে ঘুরে যাবে এবং ফোকাস করবে
-            globalWorldInstance.pointOfView({ lat: currentLat, lng: currentLon, altitude: 2.5 }, 2000); // ২ সেকেন্ড অ্যানিমেশন টাইম
+            // গ্লোবটি নির্দিষ্ট দেশের ওপরে ২ সেকেন্ড ধরে স্মুথলি ঘুরে যাবে
+            globalWorldInstance.pointOfView({ lat: currentLat, lng: currentLon, altitude: 2.5 }, 2000); 
         } else {
             alert("Location not found! Try another country or city.");
         }
@@ -197,7 +194,6 @@ async function searchLocationQTH() {
     }
 }
 
-// সার্চ বাটনে ক্লিক এবং এন্টার কী-প্রেস ইভেন্ট লিসেনার
 document.getElementById('search-btn').addEventListener('click', searchLocationQTH);
 document.getElementById('search-qth').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') searchLocationQTH();
@@ -209,7 +205,7 @@ document.getElementById('solar-wavelength').addEventListener('change', function(
     document.getElementById('sun-img').src = `https://sdo.gsfc.nasa.gov/assets/img/latest/latest_256_${chosenWave}.jpg`;
 });
 
-// --- ৬. ডার্ক/লাইট থিম মেমোরি কন্ট্রোলার ---
+// --- ६. ডার্ক/লাইট থিম মেমোরি কন্ট্রোলার ---
 const modeToggleInput = document.getElementById('checkbox');
 const textThemeDescriptor = document.getElementById('theme-text');
 const bodyElementRef = document.body;
@@ -235,7 +231,7 @@ if (modeToggleInput && textThemeDescriptor) {
     });
 }
 
-// --- ৭. তাপমাত্রা প্রদর্শন ও F/C সুইচিং লজিক ইঞ্জিন ---
+// --- ৭. তাপমাত্রা প্রদর্শন ও F/C সুইচিং লজিক ---
 function updateTemperatureDisplay() {
     if (currentCelsiusTemp === null) return;
 
@@ -262,8 +258,7 @@ document.getElementById('toggle-temp-unit').addEventListener('click', () => {
 });
 
 // --- সিস্টেম এক্সিকিউশন রানার ---
-synchronizeHamAPIs(true); // Initial load true রাখায় প্রথমে নিজের লোকেশন লোড হবে
+synchronizeHamAPIs(true); 
 setTimeout(boot3DEarthGlobe, 350);
 
-// ৫ মিনিট পরপর অটো ব্যাকগ্রাউন্ড ডাটা রিফ্রেশ লুপ
 setInterval(() => { synchronizeHamAPIs(false); }, 300000);
