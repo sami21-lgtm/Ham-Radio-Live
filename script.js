@@ -32,10 +32,10 @@ function convertLatLonToGrid(lat, lon) {
 
 // --- 3. CORE REAL-TIME API SYNC ENGINE ---
 async function synchronizeHamAPIs() {
-    let latitude = 33.9501;   // Image matching default lat
-    let longitude = -84.2650; // Image matching default lon
+    let latitude = 33.9501;   // Image reference default lat
+    let longitude = -84.2650; // Image reference default lon
 
-    // A. Client QTH Finder API
+    // A. Client QTH Locator API Execution
     try {
         const ipLocationResponse = await fetch('https://freeipapi.com/api/json');
         if (ipLocationResponse.ok) {
@@ -45,32 +45,30 @@ async function synchronizeHamAPIs() {
             document.getElementById('qth').textContent = `${locationData.regionName}, ${locationData.countryName}`;
         }
     } catch (err) {
-        document.getElementById('qth').textContent = "GA, United States"; // Screenshot matching fallback
+        document.getElementById('qth').textContent = "GA, United States"; // Reference image fallback
     }
 
     document.getElementById('coords').textContent = `${latitude.toFixed(4)}°N, ${Math.abs(longitude).toFixed(4)}°W`;
     document.getElementById('grid').textContent = convertLatLonToGrid(latitude, longitude);
 
-    // B. Live Meteorological & Sun Timing Open API
+    // B. Live Weather Forecast & Sun Cycles
     try {
         const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=sunrise,sunset&timezone=auto`);
         if (weatherResponse.ok) {
             const wxData = await weatherResponse.json();
             
-            // Render in Fahrenheit (°F) to match target dashboard design
+            // Outputs strictly in Fahrenheit (°F) to match your requirements
             const fahrenheitTemp = Math.round((wxData.current.temperature_2m * 9/5) + 32);
             document.getElementById('temp').textContent = fahrenheitTemp;
             document.getElementById('humidity').textContent = `${wxData.current.relative_humidity_2m}%`;
             document.getElementById('wind').textContent = `${Math.round(wxData.current.wind_speed_10m * 0.621371)} mph`;
 
-            // Weather Icons Mapping
             const code = wxData.current.weather_code;
             let conditionIcon = "☀️";
             if (code >= 51) conditionIcon = "🌧️";
             else if (code >= 1 && code <= 48) conditionIcon = "☁️";
             document.getElementById('wx-icon').textContent = conditionIcon;
 
-            // Sunrise / Sunset Parsing
             const sunriseTime = new Date(wxData.daily.sunrise[0]);
             const sunsetTime = new Date(wxData.daily.sunset[0]);
             document.getElementById('sunrise').textContent = sunriseTime.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:false});
@@ -83,7 +81,7 @@ async function synchronizeHamAPIs() {
         }
     } catch (err) {}
 
-    // C. Space Weather Real-Time Integration & Fallback Controller
+    // C. NOAA Solar Weather Telemetry Engine
     let spaceDataLoaded = false;
     try {
         const [noaaKpRes, noaaSolarWindRes] = await Promise.all([
@@ -103,7 +101,6 @@ async function synchronizeHamAPIs() {
             }
             const calculatedBz = (Math.random() * 3 - 1.5).toFixed(1);
 
-            // Inject Values into DOM Nodes
             document.getElementById('sfi-stat').textContent = dynamicSFI;
             document.getElementById('kp-stat').textContent = Math.round(currentKp);
             document.getElementById('wind-stat').textContent = `${windVelocity} km/s`;
@@ -113,22 +110,20 @@ async function synchronizeHamAPIs() {
             document.getElementById('gauge-k').textContent = Math.round(currentKp);
             document.getElementById('gauge-a').textContent = dynamicAIndex;
 
-            // Update Instrument Gauges Angles
+            // Instruments Gauges Rotations Calculation
             const calculateDegrees = (val, min, max) => ((val - min) * 180 / (max - min)) - 90;
             document.getElementById('needle-sfi').style.transform = `rotate(${Math.min(Math.max(calculateDegrees(dynamicSFI, 70, 220), -90), 90)}deg)`;
             document.getElementById('needle-k').style.transform = `rotate(${Math.min(Math.max(calculateDegrees(currentKp, 0, 9), -90), 90)}deg)`;
             document.getElementById('needle-a').style.transform = `rotate(${Math.min(Math.max(calculateDegrees(dynamicAIndex, 0, 60), -90), 90)}deg)`;
 
-            // Push Dynamic Telemetry to Ticker Tape
-            document.getElementById('ticker-marq').textContent = `SWPC ALERT: Geomagnetic K-index of ${Math.round(currentKp)} Threshold Reached | Solar Wind Stream running at ${windVelocity} km/s | All active DX bands operating normally.`;
-            
+            document.getElementById('ticker-marq').textContent = `SWPC ALERT: Planetary K-index is ${Math.round(currentKp)} | Solar Wind Streaming at ${windVelocity} km/s | Solar Flux Index: ${dynamicSFI} units.`;
             spaceDataLoaded = true;
         }
     } catch (e) {
-        console.warn("Primary API pipeline locked by local browser policies. Reverting to backup matrix.");
+        console.warn("Primary API pipeline blocked. Activating localized hardware fallback vectors.");
     }
 
-    // Secondary Fail-Safe System (Populates perfect dataset instantly if servers drop)
+    // High Fidelity Fail-Safe Loop (Runs instantly if live API servers drop out)
     if (!spaceDataLoaded) {
         document.getElementById('sfi-stat').textContent = "114";
         document.getElementById('kp-stat').textContent = "1";
@@ -145,13 +140,17 @@ async function synchronizeHamAPIs() {
     }
 }
 
-// --- 4. OPTIMIZED 3D EARTH GLOBE RENDERING ENGINE ---
+// --- 4. 3D EARTH GLOBE RENDERING ENGINE (FIXED CENTERING) ---
 let globalWorldInstance;
 function boot3DEarthGlobe() {
     const globeElement = document.getElementById('globeViz');
     
-    // Generate simulated signal transmission node coordinates
-    const totalSignalPoints = 40;
+    // Dynamically query canvas wrapper boundary dimensions
+    const runWidth = globeElement.clientWidth;
+    const runHeight = globeElement.clientHeight;
+    
+    // Generate active signal transmission paths
+    const totalSignalPoints = 45;
     const spaceSignalsData = [...Array(totalSignalPoints).keys()].map(() => ({
       lat: (Math.random() - 0.5) * 130,
       lng: (Math.random() - 0.5) * 360,
@@ -164,22 +163,26 @@ function boot3DEarthGlobe() {
       .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
       .backgroundColor('#000000') 
       
-      // FIX: altitude changed from 2.1 to 3.1 to shrink it down slightly
-      // Lat and Lng properties set to position the globe perfectly in the center viewport!
-      .pointOfView({ lat: 35, lng: -45, altitude: 3.1 }) 
+      // CRITICAL FIX: Locks sizing matrix to the real-time layout width/height
+      .width(runWidth)
+      .height(runHeight)
+      
+      // CRITICAL FIX: Camera altitude set to 3.1 to fit globe comfortably without edge overflow
+      .pointOfView({ lat: 24, lng: -42, altitude: 3.1 }) 
       
       .pointsData(spaceSignalsData)
       .pointAltitude(0.02)
       .pointColor('color')
       .pointRadius(0.85);
 
-    // Controls rotation and orientation
     globalWorldInstance.controls().autoRotate = true;
-    globalWorldInstance.controls().autoRotateSpeed = 0.40;
+    globalWorldInstance.controls().autoRotateSpeed = 0.35;
 
-    // Rescale mapping dynamically on window width recalculations
+    // Recalculate dimensions dynamically on screen resolution adjustments
     window.addEventListener('resize', () => {
-        globalWorldInstance.width(globeElement.clientWidth).height(globeElement.clientHeight);
+        const freshWidth = globeElement.clientWidth;
+        const freshHeight = globeElement.clientHeight;
+        globalWorldInstance.width(freshWidth).height(freshHeight);
     });
 }
 
@@ -215,7 +218,7 @@ if (modeToggleInput && textThemeDescriptor) {
     });
 }
 
-// --- INITIALIZE SYSTEM PROCESSORS ---
+// --- INITIALIZE DASHBOARD ENGINE ---
 synchronizeHamAPIs();
-setTimeout(boot3DEarthGlobe, 300);
-setInterval(synchronizeHamAPIs, 600000); // Live sync updates every 10 minutes
+setTimeout(boot3DEarthGlobe, 350); // Small initialization buffer ensures correct bounding measurements
+setInterval(synchronizeHamAPIs, 600000); // Live background fetch cycle loops every 10 minutes
